@@ -109,13 +109,13 @@ if ($LASTEXITCODE -eq 0) {
 
 # 7. Check / Build Backend Binary
 $BackendExe = "$ProjectRoot\backend\build\jobpilot_server.exe"
+Write-Host "[+] Ensuring C++ Drogon backend is built and up to date..." -ForegroundColor Cyan
+Set-Location "$ProjectRoot\backend"
 if (-not (Test-Path $BackendExe)) {
-    Write-Host "[+] Compiling C++ Drogon backend (first-time build)..." -ForegroundColor Cyan
-    Set-Location "$ProjectRoot\backend"
     cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-    cmake --build build
-    Set-Location $ProjectRoot
 }
+cmake --build build
+Set-Location $ProjectRoot
 Write-Host "[OK] C++ Drogon Backend binary ready" -ForegroundColor Green
 
 # 8. Check Frontend Dependencies

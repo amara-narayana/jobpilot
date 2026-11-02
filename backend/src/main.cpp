@@ -2,6 +2,7 @@
 #include "utils/DbPool.h"
 #include "services/Services.h"
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <filesystem>
 #include <csignal>
@@ -16,7 +17,33 @@ void signalHandler(int signum) {
     app().quit();
 }
 
+static void loadEnvFile(const std::string& path) {
+    std::ifstream file(path);
+    if (!file.is_open()) return;
+    std::string line;
+    while (std::getline(file, line)) {
+        size_t start = line.find_first_not_of(" \t\r\n");
+        if (start == std::string::npos || line[start] == '#') continue;
+        size_t eq = line.find('=', start);
+        if (eq == std::string::npos) continue;
+        std::string key = line.substr(start, eq - start);
+        std::string val = line.substr(eq + 1);
+        size_t vstart = val.find_first_not_of(" \t\r\n");
+        size_t vend = val.find_last_not_of(" \t\r\n");
+        val = (vstart != std::string::npos) ? val.substr(vstart, vend - vstart + 1) : "";
+#ifdef _WIN32
+        _putenv_s(key.c_str(), val.c_str());
+#else
+        setenv(key.c_str(), val.c_str(), 1);
+#endif
+    }
+}
+
 int main(int argc, char* argv[]) {
+    // 0. Auto-load .env configuration
+    loadEnvFile(".env");
+    loadEnvFile("../.env");
+
     std::cout << "==========================================================" << std::endl;
     std::cout << "  JOBPILOT - Career Operating System Backend (C++20 Drogon)" << std::endl;
     std::cout << "==========================================================" << std::endl;

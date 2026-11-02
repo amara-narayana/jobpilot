@@ -227,16 +227,52 @@ void DbPool::destroyConnection(MYSQL* conn) {
 
 DbConnection DbPool::getConnection() {
     std::unique_lock<std::mutex> lock(mutex_);
-    cv_.wait(lock, [this]() { return !pool_.empty() || stopping_; });
+
+    // If pool has an available connection, reuse it
+    if (!pool_.empty()) {
+        MYSQL* conn = pool_.front();
+        pool_.pop();
+
+        // Health check connection
+        if (mysql_ping(conn) != 0) {
+            destroyConnection(conn);
+            conn = createConnection();
+            if (!conn) {
+                throw std::runtime_error("Failed to restore dead MySQL connection");
+            }
+        }
+        return DbConnection(conn, this);
+    }
+
+    // If pool is empty, attempt to create a connection immediately
+    if (!stopping_) {
+        MYSQL* directConn = createConnection();
+        if (directConn) {
+            return DbConnection(directConn, this);
+        }
+    }
+
+    // Wait up to 5 seconds for a connection to return to pool
+    bool acquired = cv_.wait_for(lock, std::chrono::seconds(5), [this]() {
+        return !pool_.empty() || stopping_;
+    });
 
     if (stopping_) {
         throw std::runtime_error("DbPool is stopping");
     }
 
+    if (!acquired || pool_.empty()) {
+        // Last attempt to create on demand
+        MYSQL* directConn = createConnection();
+        if (directConn) {
+            return DbConnection(directConn, this);
+        }
+        throw std::runtime_error("Database connection timeout: Unable to acquire a connection from MySQL pool. Please verify MySQL service is running and credentials in .env are correct.");
+    }
+
     MYSQL* conn = pool_.front();
     pool_.pop();
 
-    // Health check connection
     if (mysql_ping(conn) != 0) {
         destroyConnection(conn);
         conn = createConnection();
