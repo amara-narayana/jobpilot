@@ -1,0 +1,37 @@
+[Unit]
+Description=JobPilot C++ Drogon Backend Service
+Documentation=https://github.com/jobpilot/jobpilot
+After=network.target mysql.service mariadb.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=jobpilot
+Group=jobpilot
+WorkingDirectory=/var/www/jobpilot
+ExecStart=/var/www/jobpilot/backend/build/jobpilot_server
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5s
+
+# Process and Security Limits
+LimitNOFILE=65536
+LimitNPROC=4096
+TasksMax=1024
+
+# Sandboxing & Hardening
+ProtectSystem=full
+ProtectHome=true
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Environment Variables Configuration
+EnvironmentFile=/var/www/jobpilot/.env
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=jobpilot-backend
+
+[Install]
+WantedBy=multi-user.target
