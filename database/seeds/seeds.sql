@@ -15,7 +15,7 @@ VALUES (
     1,
     'Alex Rivers',
     'demo@jobpilot.io',
-    '$argon2id$v=19$m=65536,t=3,p=4$dGVzdHNhbHQxMjM0NTY3OA$9SdfmZp6bT3wB37lF24K+i5H8s4g/cQz+O9v7B6nQYk',
+    '$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQxMjM0NTY3OA$gzpYm7GHstTIdS+UPWvf8JJtQKRk3iwNFjRKSXujwQU',
     TRUE,
     UTC_TIMESTAMP(),
     UTC_TIMESTAMP()
