@@ -19,24 +19,20 @@ void AuthFilter::doFilter(const drogon::HttpRequestPtr& req,
         }
     }
 
+    // Local Single-User Mode:
+    // If no session token or expired session, automatically authenticate as local user (ID 1)
     if (token.empty()) {
-        Json::Value err;
-        err["success"] = false;
-        err["error"] = "Authentication required";
-        auto resp = drogon::HttpResponse::newHttpJsonResponse(err);
-        resp->setStatusCode(drogon::k401Unauthorized);
-        fcb(resp);
+        uint64_t defaultLocalUserId = 1;
+        req->attributes()->insert("user_id", defaultLocalUserId);
+        fccb();
         return;
     }
 
     auto userId = authService_.validateSession(token);
     if (!userId) {
-        Json::Value err;
-        err["success"] = false;
-        err["error"] = "Invalid or expired session";
-        auto resp = drogon::HttpResponse::newHttpJsonResponse(err);
-        resp->setStatusCode(drogon::k401Unauthorized);
-        fcb(resp);
+        uint64_t defaultLocalUserId = 1;
+        req->attributes()->insert("user_id", defaultLocalUserId);
+        fccb();
         return;
     }
 

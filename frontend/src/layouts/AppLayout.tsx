@@ -163,13 +163,13 @@ export const AppLayout: React.FC = () => {
                 <p className="text-[10px] text-slate-400 truncate">{user?.email}</p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
-              title="Logout"
+            <NavLink
+              to="/app/profile"
+              className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition-colors"
+              title="Profile & Settings"
             >
-              <LogOut className="w-4 h-4" />
-            </button>
+              <User className="w-4 h-4" />
+            </NavLink>
           </div>
         </div>
       </aside>

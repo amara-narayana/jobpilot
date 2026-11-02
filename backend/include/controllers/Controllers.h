@@ -126,6 +126,7 @@ public:
     METHOD_LIST_BEGIN
     ADD_METHOD_TO(AnalyticsController::getDashboard, "/api/v1/dashboard", Get, Options, "jobpilot::middleware::CorsFilter", "jobpilot::middleware::AuthFilter");
     ADD_METHOD_TO(AnalyticsController::getAnalytics, "/api/v1/analytics", Get, Options, "jobpilot::middleware::CorsFilter", "jobpilot::middleware::AuthFilter");
+    ADD_METHOD_TO(AnalyticsController::getAnalytics, "/api/v1/analytics/overview", Get, Options, "jobpilot::middleware::CorsFilter", "jobpilot::middleware::AuthFilter");
     ADD_METHOD_TO(AnalyticsController::exportData, "/api/v1/user/export", Get, Options, "jobpilot::middleware::CorsFilter", "jobpilot::middleware::AuthFilter");
     METHOD_LIST_END
 

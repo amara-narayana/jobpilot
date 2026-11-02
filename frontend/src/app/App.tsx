@@ -1,19 +1,10 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 // Layouts
 import { AppLayout } from '@/layouts/AppLayout';
-import { AuthLayout } from '@/layouts/AuthLayout';
-
-// Auth & Public Pages
-import { LandingPage } from '@/pages/LandingPage';
-import { LoginPage } from '@/pages/LoginPage';
-import { RegisterPage } from '@/pages/RegisterPage';
-import { OtpPage } from '@/pages/OtpPage';
-import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
-import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 
 // Protected App Pages
 import { DashboardPage } from '@/pages/DashboardPage';
@@ -41,57 +32,22 @@ const queryClient = new QueryClient({
   },
 });
 
-const ProtectedRoute: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400">
-        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm font-medium tracking-wide">Initializing JobPilot...</p>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children ? <>{children}</> : <Outlet />;
-};
-
-const PublicOnlyRoute: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) return null;
-
-  if (user) {
-    return <Navigate to="/app/dashboard" replace />;
-  }
-
-  return children ? <>{children}</> : <Outlet />;
-};
-
 export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* Landing */}
-            <Route path="/" element={<LandingPage />} />
+            {/* Direct Redirect to Dashboard for Local Mode */}
+            <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="/login" element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="/register" element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="/verify-otp" element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="/forgot-password" element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="/reset-password" element={<Navigate to="/app/dashboard" replace />} />
 
-            {/* Auth Routes */}
-            <Route element={<PublicOnlyRoute><AuthLayout /></PublicOnlyRoute>}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/verify-otp" element={<OtpPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-            </Route>
-
-            {/* Protected Workspace Routes */}
-            <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+            {/* Main Application Workspace */}
+            <Route path="/app" element={<AppLayout />}>
               <Route index element={<Navigate to="/app/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="applications" element={<ApplicationsPage />} />
@@ -106,7 +62,7 @@ export const App: React.FC = () => {
               <Route path="profile" element={<ProfilePage />} />
             </Route>
 
-            {/* Catch-all 404 */}
+            {/* Catch-all */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </BrowserRouter>

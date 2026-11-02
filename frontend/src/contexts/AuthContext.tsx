@@ -2,10 +2,34 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { User, UserPreferences, NotificationPreferences } from '@/types';
 import { authService, LoginDTO, RegisterDTO, VerifyOtpDTO } from '@/services/authService';
 
+export const LOCAL_USER: User = {
+  id: 1,
+  full_name: 'Amara Narayana',
+  email: 'local@jobpilot.io',
+  is_verified: true,
+  created_at: '2026-11-02 00:00:00',
+  updated_at: '2026-11-02 00:00:00',
+};
+
+const DEFAULT_PREFERENCES: UserPreferences = {
+  theme: 'dark',
+  default_currency: 'USD',
+  timezone: 'UTC',
+  email_notifications: true,
+};
+
+const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
+  email_interview_reminders: true,
+  email_deadline_reminders: true,
+  email_followup_reminders: true,
+  email_daily_digest: false,
+  lead_time_hours: 24,
+};
+
 interface AuthContextType {
-  user: User | null;
-  preferences: UserPreferences | null;
-  notificationPreferences: NotificationPreferences | null;
+  user: User;
+  preferences: UserPreferences;
+  notificationPreferences: NotificationPreferences;
   loading: boolean;
   login: (data: LoginDTO) => Promise<User>;
   register: (data: RegisterDTO) => Promise<{ user_id: number; email: string; dev_otp?: string }>;
@@ -20,10 +44,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
-  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User>(LOCAL_USER);
+  const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(DEFAULT_NOTIFICATION_PREFERENCES);
+  const [loading, setLoading] = useState(false);
   const [theme, setThemeState] = useState<'dark' | 'light'>('dark');
 
   const setTheme = useCallback((newTheme: 'dark' | 'light') => {
@@ -51,12 +75,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setNotificationPreferences(res.data.notification_preferences);
         }
       } else {
-        setUser(null);
+        setUser(LOCAL_USER);
       }
     } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
+      // Local standalone mode: fallback to LOCAL_USER
+      setUser(LOCAL_USER);
     }
   }, [setTheme]);
 
@@ -64,49 +87,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUser();
   }, [refreshUser]);
 
-  const login = async (data: LoginDTO) => {
-    const res = await authService.login(data);
-    if (!res.data?.user) {
-      throw new Error(res.error || 'Authentication failed');
-    }
-    await refreshUser();
-    return res.data.user;
+  const login = async (_data: LoginDTO) => {
+    return LOCAL_USER;
   };
 
-  const register = async (data: RegisterDTO) => {
-    const res = await authService.register(data);
-    if (!res.data) {
-      throw new Error(res.error || 'Registration failed');
-    }
-    return res.data;
+  const register = async (_data: RegisterDTO) => {
+    return { user_id: 1, email: LOCAL_USER.email };
   };
 
-  const verifyOtp = async (data: VerifyOtpDTO) => {
-    const res = await authService.verifyOtp(data);
-    if (!res.data?.user) {
-      throw new Error(res.error || 'Verification failed');
-    }
-    await refreshUser();
-    return res.data.user;
+  const verifyOtp = async (_data: VerifyOtpDTO) => {
+    return LOCAL_USER;
   };
 
   const logout = async () => {
-    try {
-      await authService.logout();
-    } finally {
-      setUser(null);
-      setPreferences(null);
-      setNotificationPreferences(null);
-    }
+    // Local standalone mode: No-op
   };
 
   const updatePreferences = async (newPrefs: Partial<UserPreferences>) => {
-    const res = await authService.updatePreferences(newPrefs);
-    if (res.data?.preferences) {
-      setPreferences(res.data.preferences);
-      if (res.data.preferences.theme) {
-        setTheme(res.data.preferences.theme);
+    try {
+      setPreferences((prev) => ({ ...prev, ...newPrefs }));
+      if (newPrefs.theme) {
+        setTheme(newPrefs.theme);
       }
+    } catch (e) {
+      console.error('Failed to update preferences:', e);
     }
   };
 
