@@ -56,7 +56,7 @@ void AuthController::verifyOtp(const HttpRequestPtr& req, std::function<void(con
         
         // Auto-login after verification
         std::string ip = req->peerAddr().toIp();
-        auto loginRes = authService_.login((*json)["email"].asString(), "", ip, req->getHeader("User-Agent"));
+        auto loginRes = authService_.createSessionForUser(u, ip, req->getHeader("User-Agent"));
         
         Json::Value data;
         data["user"] = u.toJson();

@@ -216,6 +216,9 @@ MYSQL* DbPool::createConnection() {
 
     // Force UTF-8 encoding
     mysql_set_character_set(conn, "utf8mb4");
+
+    // Enforce consistent UTC timezone
+    mysql_query(conn, "SET time_zone = '+00:00';");
     return conn;
 }
 

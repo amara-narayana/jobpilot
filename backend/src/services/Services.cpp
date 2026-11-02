@@ -100,6 +100,19 @@ AuthService::LoginResult AuthService::login(const std::string& email, const std:
     return res;
 }
 
+AuthService::LoginResult AuthService::createSessionForUser(const User& user, const std::string& ip, const std::string& userAgent) {
+    std::string rawToken = utils::CryptoUtils::generateToken(32);
+    std::string tokenHash = utils::CryptoUtils::sha256(rawToken);
+
+    sessionRepo_.createSession(user.id, tokenHash, ip, userAgent, 30);
+    activityRepo_.logActivity(user.id, "USER_LOGIN", "SESSION", std::nullopt, "User verified and logged in from " + ip);
+
+    LoginResult res;
+    res.user = user;
+    res.session_token = rawToken;
+    return res;
+}
+
 void AuthService::logout(const std::string& sessionToken) {
     std::string tokenHash = utils::CryptoUtils::sha256(sessionToken);
     sessionRepo_.revokeSession(tokenHash);

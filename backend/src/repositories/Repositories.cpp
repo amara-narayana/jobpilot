@@ -104,7 +104,7 @@ void UserRepository::createOtp(uint64_t userId, const std::string& otpHash, cons
     std::ostringstream oss;
     oss << "INSERT INTO otp_verifications (user_id, otp_hash, otp_type, expires_at) VALUES ("
         << userId << ", '" << conn.escape(otpHash) << "', '" << conn.escape(type) << "', "
-        << "DATE_ADD(UTC_TIMESTAMP(), INTERVAL " << expiryMinutes << " MINUTE));";
+        << "DATE_ADD(NOW(), INTERVAL " << expiryMinutes << " MINUTE));";
     conn.execute(oss.str());
 }
 
@@ -114,7 +114,7 @@ bool UserRepository::verifyOtp(uint64_t userId, const std::string& otpHash, cons
     oss << "SELECT id, attempts, max_attempts FROM otp_verifications "
         << "WHERE user_id = " << userId
         << " AND otp_type = '" << conn.escape(type) << "' "
-        << " AND is_used = 0 AND expires_at >= UTC_TIMESTAMP() "
+        << " AND is_used = 0 AND expires_at >= NOW() "
         << "ORDER BY id DESC LIMIT 1;";
     auto rows = conn.queryJson(oss.str());
     if (rows.empty()) return false;

@@ -30,6 +30,7 @@ public:
     User verifyOtp(const std::string& email, const std::string& otp);
     std::string resendOtp(const std::string& email); // returns dev_otp
     LoginResult login(const std::string& email, const std::string& password, const std::string& ip, const std::string& userAgent);
+    LoginResult createSessionForUser(const User& user, const std::string& ip, const std::string& userAgent);
     void logout(const std::string& sessionToken);
     std::optional<uint64_t> validateSession(const std::string& sessionToken);
     std::string forgotPassword(const std::string& email); // returns dev_token
