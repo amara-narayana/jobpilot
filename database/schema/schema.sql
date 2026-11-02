@@ -281,7 +281,7 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     action VARCHAR(100) NOT NULL,
     entity_type VARCHAR(50) NOT NULL,
     entity_id BIGINT UNSIGNED NULL,
-    details JSON NULL,
+    details TEXT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_activity_logs_user FOREIGN KEY (user_id)
         REFERENCES users (id) ON DELETE CASCADE,

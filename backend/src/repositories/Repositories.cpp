@@ -906,13 +906,29 @@ bool ReminderRepository::markSent(uint64_t id) {
 // ActivityLogRepository
 // ----------------------------------------------------------------------------
 void ActivityLogRepository::logActivity(uint64_t userId, const std::string& action, const std::string& entityType, std::optional<uint64_t> entityId, const std::string& details) {
-    auto conn = db::DbPool::getInstance().getConnection();
-    std::ostringstream oss;
-    oss << "INSERT INTO activity_logs (user_id, action, entity_type, entity_id, details) VALUES ("
-        << userId << ", '" << conn.escape(action) << "', '" << conn.escape(entityType) << "', "
-        << (entityId ? std::to_string(*entityId) : "NULL") << ", "
-        << (details.empty() ? "NULL" : ("'" + conn.escape(details) + "'")) << ");";
-    conn.execute(oss.str());
+    try {
+        auto conn = db::DbPool::getInstance().getConnection();
+        std::ostringstream oss;
+        std::string jsonExpr;
+        if (details.empty()) {
+            jsonExpr = "NULL";
+        } else {
+            std::string escaped = conn.escape(details);
+            if (details.front() == '{' && details.back() == '}') {
+                jsonExpr = "IF(JSON_VALID('" + escaped + "'), '" + escaped + "', JSON_OBJECT('message', '" + escaped + "'))";
+            } else {
+                jsonExpr = "JSON_OBJECT('message', '" + escaped + "')";
+            }
+        }
+
+        oss << "INSERT INTO activity_logs (user_id, action, entity_type, entity_id, details) VALUES ("
+            << userId << ", '" << conn.escape(action) << "', '" << conn.escape(entityType) << "', "
+            << (entityId ? std::to_string(*entityId) : "NULL") << ", "
+            << jsonExpr << ");";
+        conn.execute(oss.str());
+    } catch (const std::exception& e) {
+        std::cerr << "[ActivityLogRepository] Warning: Failed to log activity: " << e.what() << std::endl;
+    }
 }
 
 std::vector<ActivityLog> ActivityLogRepository::listRecentActivity(uint64_t userId, size_t limit) {
